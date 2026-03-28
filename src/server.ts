@@ -1,50 +1,71 @@
-import { Server } from "http";
+import http, { Server } from "http";
 import app from "./app";
 import { envVars } from "./config/env";
+import { prisma } from "./config/prisma";
+import seedSuperAdmin from "./app/utils/seedAdmin";
 
-async function bootstrap() {
-  // This variable will hold our server instance
-  let server: Server;
+let server: Server | null = null;
 
+const connectToDB = async () => {
   try {
-    // Seed super admin
-    // await seedSuperAdmin();
+    await prisma.$connect();
+    console.log("✅ SQL Database Connected");
+  } catch (err) {
+    console.log("❌ Database Connection Failed", err);
+  }
+};
 
-    // Start the server
-    server = app.listen(envVars.PORT, () => {
-      console.log(`Server is running on http://localhost:${envVars.PORT}`);
+const startServer = async () => {
+  try {
+    server = http.createServer(app);
+    server.listen(envVars.PORT, () => {
+      console.log(`✅ Server is running on port ${envVars.PORT}`);
     });
 
-    // Function to gracefully shut down the server
-    const exitHandler = () => {
-      if (server) {
-        server.close(() => {
-          console.log("Server closed gracefully.");
-          process.exit(1); // Exit with a failure code
-        });
-      } else {
-        process.exit(1);
-      }
-    };
-
-    // Handle unhandled promise rejections
-    process.on("unhandledRejection", (error) => {
-      console.log(
-        "Unhandled Rejection is detected, we are closing our server...",
-      );
-      if (server) {
-        server.close(() => {
-          console.log(error);
-          process.exit(1);
-        });
-      } else {
-        process.exit(1);
-      }
-    });
+    handleProcessEvents();
   } catch (error) {
-    console.error("Error during server startup:", error);
+    console.error("❌ Error during server startup:", error);
     process.exit(1);
+  }
+};
+
+async function gracefulShutdown(signal: string) {
+  console.warn(`🔄 Received ${signal}, shutting down gracefully...`);
+
+  if (server) {
+    server.close(async () => {
+      console.log("✅ HTTP server closed.");
+
+      try {
+        console.log("Server shutdown complete.");
+      } catch (error) {
+        console.error("❌Error during shutdown:", error);
+      }
+
+      process.exit(0);
+    });
+  } else {
+    process.exit(0);
   }
 }
 
-bootstrap();
+function handleProcessEvents() {
+  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+  process.on("uncaughtException", (error) => {
+    console.error("💥 Uncaught Exception:", error);
+    gracefulShutdown("uncaughtException");
+  });
+
+  process.on("unhandledRejection", (reason) => {
+    console.error("💥 Unhandled Rejection:", reason);
+    gracefulShutdown("unhandledRejection");
+  });
+}
+
+(async () => {
+  await seedSuperAdmin();
+  await connectToDB();
+  await startServer();
+})();
