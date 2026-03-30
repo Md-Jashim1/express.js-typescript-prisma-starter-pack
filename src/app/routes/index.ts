@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router } from "express";
 import { authRoutes } from "../modules/auth/auth.route";
+import { userRoutes } from "../modules/user/user.route";
 
 export const router = Router();
 
@@ -15,10 +16,10 @@ const moduleRoutes: IModuleRoutes[] = [
     route: authRoutes,
   },
 
-  //   {
-  //     path: "/users",
-  //     route: UserRoutes,
-  //   },
+  {
+    path: "/users",
+    route: userRoutes,
+  },
 ];
 
 moduleRoutes.forEach((route) => {
