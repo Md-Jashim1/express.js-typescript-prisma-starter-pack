@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
-const globalErrorHandler_1 = require("./app/middlewares/globalErrorHandler");
-const notFound_1 = require("./app/middlewares/notFound");
 const env_1 = require("./config/env");
 const routes_1 = require("./app/routes");
+const globalErrorHandler_1 = __importDefault(require("./app/middlewares/globalErrorHandler"));
+const notFound_1 = __importDefault(require("./app/middlewares/notFound"));
 const app = (0, express_1.default)();
 // Trust proxy (IMPORTANT for secure cookies on Render, Railway, Vercel, etc.)
 app.set("trust proxy", 1);
@@ -29,6 +29,6 @@ app.get("/", (req, res) => {
     });
 });
 app.use("/api/v1", routes_1.router);
-app.use(globalErrorHandler_1.globalErrorHandler);
-app.use(notFound_1.notFound);
+app.use(globalErrorHandler_1.default);
+app.use(notFound_1.default);
 exports.default = app;

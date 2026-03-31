@@ -77,7 +77,7 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
 
 const updateUser = catchAsync(async (req: Request, res: Response) => {
   const requester = (req as any).user;
-  console.log("from updateUser -> user.controller.ts", requester);
+  // console.log("from updateUser -> user.controller.ts", requester);
   const id = String(req.params.id);
   const payload = req.body;
 
